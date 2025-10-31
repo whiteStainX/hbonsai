@@ -3,22 +3,28 @@
 
 #include "config.h"
 #include <vector>
+#include <string>
+#include <utility>
 #include <cstdint>
+#include <cwchar>
+#include <random>
 
 namespace hbonsai {
 
 // Represents a single character/cell on the screen for the tree
 struct TreePart {
-    int x, y;
-    uint32_t ch;
-    uint64_t channels; // For color
+    int x = 0;
+    int y = 0;
+    wchar_t ch = L' ';
+    int colorIndex = 0;
+    bool bold = false;
 };
 
 class Bonsai {
 public:
     explicit Bonsai(const Config& config);
 
-    void grow();
+    void grow(int height, int width);
     const std::vector<TreePart>& getParts() const;
 
 private:
@@ -26,8 +32,28 @@ private:
     std::vector<TreePart> parts_;
     int life_;
 
-    // This will be the C++ version of the recursive `branch` function
-    void branch(int y, int x, int life, int type, int age);
+    enum class BranchType { Trunk, ShootLeft, ShootRight, Dying, Dead };
+
+    struct Counters {
+        int branches = 0;
+        int shoots = 0;
+        int shootCounter = 0;
+    };
+
+    std::vector<std::wstring> leaves_;
+    int treeHeight_ = 0;
+    int treeWidth_ = 0;
+
+    std::mt19937 rng_;
+
+    int roll(int max);
+    std::pair<int, int> setDeltas(BranchType type, int life, int age, int multiplier);
+    std::wstring chooseString(BranchType type, int life, int dx, int dy);
+    int chooseColor(BranchType type, bool& bold);
+    void emitString(int y, int x, const std::wstring& str, int colorIndex, bool bold);
+
+    // Recursive branch growth translated from ref.c
+    void branch(int y, int x, int life, BranchType type, Counters& counters);
 };
 
 } // namespace hbonsai

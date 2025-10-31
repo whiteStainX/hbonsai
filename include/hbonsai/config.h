@@ -1,6 +1,7 @@
 #ifndef HBONSAI_CONFIG_H
 #define HBONSAI_CONFIG_H
 
+#include <array>
 #include <string>
 #include <vector>
 
@@ -10,6 +11,8 @@ struct Config {
     bool live = false;
     bool infinite = false;
     bool screensaver = false;
+    bool printTree = false;
+    int verbosity = 0;
     int lifeStart = 32;
     int multiplier = 5;
     int baseType = 1;
@@ -17,7 +20,8 @@ struct Config {
     double timeWait = 4.0;
     float timeStep = 0.03f;
     std::string message;
-    // Other options from ref.c will go here
+    std::vector<std::string> leaves = {"&"};
+    std::array<int, 4> colors = {2, 3, 10, 11};
 };
 
 Config parse_args(int argc, char* argv[]);

@@ -1,9 +1,13 @@
+#include <algorithm>
+#include <clocale>
 #include <iostream>
 #include "hbonsai/config.h"
 #include "hbonsai/renderer.h"
 #include "hbonsai/bonsai.h"
 
 int main(int argc, char* argv[]) {
+    std::setlocale(LC_ALL, "");
+
     // 1. Parse configuration from command line arguments
     hbonsai::Config config = hbonsai::parse_args(argc, argv);
 
@@ -13,15 +17,15 @@ int main(int argc, char* argv[]) {
         return 1; // Renderer failed to initialize
     }
 
-    // 3. Create and grow the bonsai tree
-    // hbonsai::Bonsai bonsai(config);
-    // bonsai.grow();
+    hbonsai::Bonsai bonsai(config);
+    auto [rows, cols] = renderer.dimensions();
+    int baseHeight = hbonsai::Renderer::baseHeightForType(config.baseType);
+    int treeHeight = std::max(1, rows - baseHeight);
 
-    // 4. Render the final tree
-    // renderer.draw(bonsai);
+    bonsai.grow(treeHeight, cols);
+    renderer.draw(bonsai, config);
 
-    std::cout << "hbonsai initialized successfully!" << std::endl;
-    renderer.wait(); // Wait for user input before exiting
+    renderer.wait();
 
     return 0;
 }
