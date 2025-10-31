@@ -226,19 +226,39 @@ void Renderer::drawTitle(const std::string& title, bool cursor_visible, int y_po
     unsigned cols = 0;
     ncplane_dim_yx(stdplane_, &rows, &cols);
 
-    int len = title.length();
-    int x_pos = (cols - len) / 2;
+    if (rows == 0 || cols == 0) {
+        return;
+    }
+
+    if (y_pos < 0) {
+        y_pos = 0;
+    } else if (y_pos >= static_cast<int>(rows)) {
+        y_pos = static_cast<int>(rows) - 1;
+    }
+
+    int len = static_cast<int>(title.length());
+    int x_pos = std::max(0, (static_cast<int>(cols) - len) / 2);
+
+    // Trim the title if it is wider than the available columns to prevent
+    // wrapping or drawing outside the plane bounds.
+    int max_title_width = std::max(0, static_cast<int>(cols) - x_pos);
+    if (len > max_title_width) {
+        len = max_title_width;
+    }
 
     // Clear the line before drawing to prevent artifacts
     setPlaneColor(kTextColor, false);
-    ncplane_putstr_yx(stdplane_, y_pos, 0, std::string(cols, ' ').c_str());
+    std::string blank(static_cast<size_t>(cols), ' ');
+    ncplane_putstr_yx(stdplane_, y_pos, 0, blank.c_str());
 
     // Draw title
     setPlaneColor(kTextColor, true);
-    ncplane_putstr_yx(stdplane_, y_pos, x_pos, title.c_str());
+    if (len > 0) {
+        ncplane_putnstr_yx(stdplane_, y_pos, x_pos, static_cast<size_t>(len), title.c_str());
+    }
 
     // Draw cursor
-    if (cursor_visible) {
+    if (cursor_visible && x_pos + len < static_cast<int>(cols)) {
         ncplane_putstr_yx(stdplane_, y_pos, x_pos + len, "█");
     }
 }
