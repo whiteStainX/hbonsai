@@ -11,6 +11,13 @@ int main(int argc, char* argv[]) {
     // 1. Parse configuration from command line arguments
     hbonsai::Config config = hbonsai::parse_args(argc, argv);
 
+    if (config.exitRequested) {
+        if (config.showHelp) {
+            hbonsai::print_help(std::cout);
+        }
+        return config.exitCode;
+    }
+
     // 2. Initialize the renderer
     hbonsai::Renderer renderer;
     if (!renderer.isInitialized()) {
