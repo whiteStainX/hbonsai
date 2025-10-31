@@ -62,8 +62,8 @@ std::wstring utf8_to_wstring(const std::string& input) {
 } // namespace
 
 Bonsai::Bonsai(const Config& config)
-    : config_(config), life_(config.lifeStart), rng_(config.seed == 0 ? std::random_device{}()
-                                                          : static_cast<unsigned int>(config.seed)) {
+    : config_(config), rng_(config.seed == 0 ? std::random_device{}()
+                                              : static_cast<unsigned int>(config.seed)) {
     if (config_.leaves.empty()) {
         leaves_.push_back(L"&");
     } else {
@@ -78,15 +78,14 @@ Bonsai::Bonsai(const Config& config)
     }
 }
 
-void Bonsai::grow(int height, int width) {
+std::vector<TreePart> Bonsai::generate(int height, int width) {
+    std::vector<TreePart> parts;
     if (height <= 0 || width <= 0) {
-        return;
+        return parts;
     }
 
     treeHeight_ = height;
     treeWidth_ = width;
-    parts_.clear();
-    life_ = config_.lifeStart;
 
     Counters counters;
     counters.shootCounter = roll(1000);
@@ -94,11 +93,9 @@ void Bonsai::grow(int height, int width) {
     int startY = treeHeight_ - 1;
     int startX = treeWidth_ / 2;
 
-    branch(startY, startX, config_.lifeStart, BranchType::Trunk, counters);
-}
+    branch(startY, startX, config_.lifeStart, BranchType::Trunk, counters, parts);
 
-const std::vector<TreePart>& Bonsai::getParts() const {
-    return parts_;
+    return parts;
 }
 
 int Bonsai::roll(int max) {
@@ -308,7 +305,8 @@ int Bonsai::chooseColor(BranchType type, bool& bold) {
     return config_.colors[1];
 }
 
-void Bonsai::emitString(int y, int x, const std::wstring& str, int colorIndex, bool bold) {
+void Bonsai::emitString(int y, int x, const std::wstring& str, int colorIndex, bool bold,
+                       std::vector<TreePart>& parts) {
     int currentX = x;
     for (wchar_t wc : str) {
         int width = wcwidth(wc);
@@ -323,14 +321,15 @@ void Bonsai::emitString(int y, int x, const std::wstring& str, int colorIndex, b
             part.ch = wc;
             part.colorIndex = colorIndex;
             part.bold = bold;
-            parts_.push_back(part);
+            parts.push_back(part);
         }
 
         currentX += width;
     }
 }
 
-void Bonsai::branch(int y, int x, int life, BranchType type, Counters& counters) {
+void Bonsai::branch(int y, int x, int life, BranchType type, Counters& counters,
+                    std::vector<TreePart>& parts) {
     if (life <= 0) {
         return;
     }
@@ -349,18 +348,18 @@ void Bonsai::branch(int y, int x, int life, BranchType type, Counters& counters)
         }
 
         if (life < 3) {
-            branch(y, x, life, BranchType::Dead, counters);
+            branch(y, x, life, BranchType::Dead, counters, parts);
         } else if (type == BranchType::Trunk && life < (safeMultiplier + 2)) {
-            branch(y, x, life, BranchType::Dying, counters);
+            branch(y, x, life, BranchType::Dying, counters, parts);
         } else if ((type == BranchType::ShootLeft || type == BranchType::ShootRight) &&
                    life < (safeMultiplier + 2)) {
-            branch(y, x, life, BranchType::Dying, counters);
+            branch(y, x, life, BranchType::Dying, counters, parts);
         } else if (type == BranchType::Trunk &&
                    ((roll(3) == 0) || (safeMultiplier > 0 && life > 0 && life % safeMultiplier == 0))) {
             if (roll(8) == 0 && life > 7) {
                 shootCooldown = safeMultiplier * 2;
                 int extraLife = roll(5) - 2;
-                branch(y, x, life + extraLife, BranchType::Trunk, counters);
+                branch(y, x, life + extraLife, BranchType::Trunk, counters, parts);
             } else if (shootCooldown <= 0) {
                 shootCooldown = safeMultiplier * 2;
                 int shootLife = life + safeMultiplier;
@@ -368,7 +367,7 @@ void Bonsai::branch(int y, int x, int life, BranchType type, Counters& counters)
                 counters.shootCounter++;
                 BranchType branchType = (counters.shootCounter % 2 == 0) ? BranchType::ShootRight
                                                                         : BranchType::ShootLeft;
-                branch(y, x, shootLife, branchType, counters);
+                branch(y, x, shootLife, branchType, counters, parts);
             }
         }
 
@@ -387,7 +386,7 @@ void Bonsai::branch(int y, int x, int life, BranchType type, Counters& counters)
         bool bold = false;
         int color = chooseColor(type, bold);
         std::wstring glyph = chooseString(type, life, dx, dy);
-        emitString(y, x, glyph, color, bold);
+        emitString(y, x, glyph, color, bold, parts);
     }
 }
 

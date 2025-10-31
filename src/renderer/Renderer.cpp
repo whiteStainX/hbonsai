@@ -76,7 +76,7 @@ int Renderer::baseHeightForType(int baseType) {
     }
 }
 
-void Renderer::draw(const Bonsai& bonsai, const Config& config) {
+void Renderer::prepareFrame(const Config& config) {
     if (!initialized_) {
         return;
     }
@@ -86,22 +86,69 @@ void Renderer::draw(const Bonsai& bonsai, const Config& config) {
     unsigned cols = 0;
     ncplane_dim_yx(stdplane_, &rows, &cols);
 
-    drawTree(bonsai, config, static_cast<int>(rows), static_cast<int>(cols));
     drawBase(config, static_cast<int>(rows), static_cast<int>(cols));
     drawMessage(config, static_cast<int>(rows), static_cast<int>(cols));
+}
+
+void Renderer::drawStatic(const std::vector<TreePart>& parts, const Config& config) {
+    if (!initialized_) {
+        return;
+    }
+
+    prepareFrame(config);
+
+    unsigned rows = 0;
+    unsigned cols = 0;
+    ncplane_dim_yx(stdplane_, &rows, &cols);
+
+    drawTree(parts, config, static_cast<int>(rows), static_cast<int>(cols));
+    drawMessage(config, static_cast<int>(rows), static_cast<int>(cols));
+}
+
+void Renderer::drawLive(const TreePart& part, const Config& config) {
+    if (!initialized_) {
+        return;
+    }
+
+    unsigned rows = 0;
+    unsigned cols = 0;
+    ncplane_dim_yx(stdplane_, &rows, &cols);
+
+    int baseHeight = baseHeightForType(config.baseType);
+    int treeHeight = static_cast<int>(rows) - baseHeight;
+    if (treeHeight <= 0) {
+        return;
+    }
+
+    int y = part.y;
+    int x = part.x;
+    if (y < 0 || y >= treeHeight || x < 0 || x >= static_cast<int>(cols)) {
+        return;
+    }
+
+    setPlaneColor(part.colorIndex, part.bold);
+    ncplane_putwc_yx(stdplane_, y, x, part.ch);
+
+    drawMessage(config, static_cast<int>(rows), static_cast<int>(cols));
+}
+
+void Renderer::render() {
+    if (!initialized_) {
+        return;
+    }
 
     ncplane_set_styles(stdplane_, NCSTYLE_NONE);
     notcurses_render(nc_);
 }
 
-void Renderer::drawTree(const Bonsai& bonsai, const Config& config, int rows, int cols) {
+void Renderer::drawTree(const std::vector<TreePart>& parts, const Config& config, int rows, int cols) {
     int baseHeight = baseHeightForType(config.baseType);
     int treeHeight = rows - baseHeight;
     if (treeHeight <= 0) {
         return;
     }
 
-    for (const auto& part : bonsai.getParts()) {
+    for (const auto& part : parts) {
         int y = part.y;
         int x = part.x;
         if (y < 0 || y >= treeHeight || x < 0 || x >= cols) {
