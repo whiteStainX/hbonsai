@@ -1,10 +1,12 @@
 #include "hbonsai/renderer.h"
 
 #include <algorithm>
+#include <chrono>
 #include <cwchar>
 #include <iostream>
 #include <notcurses/notcurses.h>
 #include <string>
+#include <thread>
 
 namespace hbonsai {
 namespace {
@@ -263,8 +265,63 @@ void Renderer::drawTitle(const std::string& title, bool cursor_visible, int y_po
     }
 }
 
-void Renderer::wait() {
-    notcurses_get_blocking(nc_, nullptr);
+void Renderer::waitForExit(const std::string& title, int title_y) {
+    if (!initialized_) {
+        return;
+    }
+
+    ncinput input{};
+
+    // Flush any pending events to ensure we start fresh.
+    while (notcurses_get_nblock(nc_, &input) != static_cast<char32_t>(-1)) {
+    }
+
+    const bool hasTitle = !title.empty();
+
+    if (!hasTitle) {
+        while (true) {
+            char32_t key = notcurses_get_blocking(nc_, &input);
+            if (isExitKey(key)) {
+                break;
+            }
+        }
+        return;
+    }
+
+    bool cursorVisible = true;
+    auto lastBlink = std::chrono::steady_clock::now();
+
+    drawTitle(title, cursorVisible, title_y);
+    render();
+
+    while (true) {
+        char32_t key = notcurses_get_nblock(nc_, &input);
+        if (isExitKey(key)) {
+            break;
+        }
+
+        auto now = std::chrono::steady_clock::now();
+        if (std::chrono::duration_cast<std::chrono::milliseconds>(now - lastBlink).count() >= 500) {
+            cursorVisible = !cursorVisible;
+            drawTitle(title, cursorVisible, title_y);
+            render();
+            lastBlink = now;
+        }
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(50));
+    }
+}
+
+bool Renderer::isExitKey(char32_t key) const {
+    if (key == static_cast<char32_t>(-1) || key == NCKEY_RESIZE) {
+        return false;
+    }
+
+    if (key == 'q' || key == 'Q' || key == NCKEY_ESC || key == NCKEY_ENTER || key == NCKEY_SPACE) {
+        return true;
+    }
+
+    return true;
 }
 
 } // namespace hbonsai
