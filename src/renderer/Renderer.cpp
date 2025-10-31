@@ -218,6 +218,31 @@ void Renderer::drawMessage(const Config& config, int rows, int cols) {
     ncplane_putstr_yx(stdplane_, msgY, msgX, config.message.c_str());
 }
 
+void Renderer::drawTitle(const std::string& title, bool cursor_visible, int y_pos) {
+    if (!initialized_ || title.empty()) {
+        return;
+    }
+    unsigned rows = 0;
+    unsigned cols = 0;
+    ncplane_dim_yx(stdplane_, &rows, &cols);
+
+    int len = title.length();
+    int x_pos = (cols - len) / 2;
+
+    // Clear the line before drawing to prevent artifacts
+    setPlaneColor(kTextColor, false);
+    ncplane_putstr_yx(stdplane_, y_pos, 0, std::string(cols, ' ').c_str());
+
+    // Draw title
+    setPlaneColor(kTextColor, true);
+    ncplane_putstr_yx(stdplane_, y_pos, x_pos, title.c_str());
+
+    // Draw cursor
+    if (cursor_visible) {
+        ncplane_putstr_yx(stdplane_, y_pos, x_pos + len, "█");
+    }
+}
+
 void Renderer::wait() {
     notcurses_get_blocking(nc_, nullptr);
 }
