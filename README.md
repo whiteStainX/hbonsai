@@ -39,7 +39,7 @@ This project uses CMake.
 4.  **Run:**
 
     ```bash
-    ./hbonsai [options]
+    ./build/hbonsai [options]
     ```
 
 ## Usage

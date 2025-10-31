@@ -24,13 +24,10 @@ class Bonsai {
 public:
     explicit Bonsai(const Config& config);
 
-    void grow(int height, int width);
-    const std::vector<TreePart>& getParts() const;
+    std::vector<TreePart> generate(int height, int width);
 
 private:
     const Config& config_;
-    std::vector<TreePart> parts_;
-    int life_;
 
     enum class BranchType { Trunk, ShootLeft, ShootRight, Dying, Dead };
 
@@ -50,10 +47,12 @@ private:
     std::pair<int, int> setDeltas(BranchType type, int life, int age, int multiplier);
     std::wstring chooseString(BranchType type, int life, int dx, int dy);
     int chooseColor(BranchType type, bool& bold);
-    void emitString(int y, int x, const std::wstring& str, int colorIndex, bool bold);
+    void emitString(int y, int x, const std::wstring& str, int colorIndex, bool bold,
+                    std::vector<TreePart>& parts);
 
     // Recursive branch growth translated from ref.c
-    void branch(int y, int x, int life, BranchType type, Counters& counters);
+    void branch(int y, int x, int life, BranchType type, Counters& counters,
+                std::vector<TreePart>& parts);
 };
 
 } // namespace hbonsai
