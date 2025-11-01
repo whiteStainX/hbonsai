@@ -5,7 +5,6 @@
 #include "hbonsai/bonsai_scene.h"
 #include "hbonsai/renderer.h"
 #include "hbonsai/scenemanager.h"
-#include "hbonsai/title_scene.h"
 
 int main(int argc, char* argv[]) {
     std::setlocale(LC_ALL, "");
@@ -27,10 +26,7 @@ int main(int argc, char* argv[]) {
     }
 
     hbonsai::SceneManager sceneManager;
-    if (!config.title.text.empty()) {
-        sceneManager.addScene(std::make_unique<hbonsai::TitleScene>(config.title));
-    }
-    sceneManager.addScene(std::make_unique<hbonsai::BonsaiScene>(config.app, config.bonsai));
+    sceneManager.addScene(std::make_unique<hbonsai::BonsaiScene>(config.app, config.bonsai, config.title));
 
     sceneManager.run(renderer, config.app);
 
