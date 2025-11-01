@@ -20,11 +20,9 @@ public:
 
     bool isInitialized() const;
     std::pair<int, int> dimensions() const;
-    notcurses* getNc() const { return nc_; };
     void prepareFrame(const Config& config);
     void drawStatic(const std::vector<TreePart>& parts, const Config& config);
     void drawLive(const TreePart& part, const Config& config);
-    void drawTitle(const std::string& title, bool cursor_visible, int y_pos);
     void render();
     void wait(); // Wait for input
 
