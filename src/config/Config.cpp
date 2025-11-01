@@ -144,7 +144,6 @@ Config parse_args(int argc, char* argv[]) {
         {"wait", required_argument, nullptr, 'w'},
         {"screensaver", no_argument, nullptr, 'S'},
         {"message", required_argument, nullptr, 'm'},
-        {"title", required_argument, nullptr, 'T'},
         {"base", required_argument, nullptr, 'b'},
         {"leaf", required_argument, nullptr, 'c'},
         {"color", required_argument, nullptr, 'k'},
@@ -160,7 +159,7 @@ Config parse_args(int argc, char* argv[]) {
         {nullptr, 0, nullptr, 0}
     };
 
-    const char* short_opts = ":lt:iw:Sm:T:b:c:k:M:L:ps:W::C::vh";
+    const char* short_opts = ":lt:iw:Sm:b:c:k:M:L:ps:W::C::vh";
 
     bool has_error = false;
 
@@ -221,14 +220,6 @@ Config parse_args(int argc, char* argv[]) {
                 has_error = true;
             } else {
                 config.message = optarg;
-            }
-            break;
-        case 'T':
-            if (!optarg) {
-                std::cerr << "error: option requires an argument -- 'T'" << std::endl;
-                has_error = true;
-            } else {
-                config.title = optarg;
             }
             break;
         case 'b': {

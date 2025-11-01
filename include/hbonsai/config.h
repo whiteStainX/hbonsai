@@ -21,11 +21,8 @@ struct Config {
     int targetBranchCount = 0;
     double timeWait = 4.0;
     float timeStep = 0.03f;
-    // Display
     std::string message;
-    std::string title;
     std::vector<std::string> leaves = {"&"};
-    
     std::array<int, 4> colors = {2, 3, 10, 11};
     bool save = false;
     bool load = false;

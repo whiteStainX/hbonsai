@@ -1,12 +1,10 @@
 #include "hbonsai/renderer.h"
 
 #include <algorithm>
-#include <chrono>
 #include <cwchar>
 #include <iostream>
 #include <notcurses/notcurses.h>
 #include <string>
-#include <thread>
 
 namespace hbonsai {
 namespace {
@@ -220,108 +218,8 @@ void Renderer::drawMessage(const Config& config, int rows, int cols) {
     ncplane_putstr_yx(stdplane_, msgY, msgX, config.message.c_str());
 }
 
-void Renderer::drawTitle(const std::string& title, bool cursor_visible, int y_pos) {
-    if (!initialized_ || title.empty()) {
-        return;
-    }
-    unsigned rows = 0;
-    unsigned cols = 0;
-    ncplane_dim_yx(stdplane_, &rows, &cols);
-
-    if (rows == 0 || cols == 0) {
-        return;
-    }
-
-    if (y_pos < 0) {
-        y_pos = 0;
-    } else if (y_pos >= static_cast<int>(rows)) {
-        y_pos = static_cast<int>(rows) - 1;
-    }
-
-    int len = static_cast<int>(title.length());
-    int x_pos = std::max(0, (static_cast<int>(cols) - len) / 2);
-
-    // Trim the title if it is wider than the available columns to prevent
-    // wrapping or drawing outside the plane bounds.
-    int max_title_width = std::max(0, static_cast<int>(cols) - x_pos);
-    if (len > max_title_width) {
-        len = max_title_width;
-    }
-
-    // Clear the line before drawing to prevent artifacts
-    setPlaneColor(kTextColor, false);
-    std::string blank(static_cast<size_t>(cols), ' ');
-    ncplane_putstr_yx(stdplane_, y_pos, 0, blank.c_str());
-
-    // Draw title
-    setPlaneColor(kTextColor, true);
-    if (len > 0) {
-        ncplane_putnstr_yx(stdplane_, y_pos, x_pos, static_cast<size_t>(len), title.c_str());
-    }
-
-    // Draw cursor
-    if (cursor_visible && x_pos + len < static_cast<int>(cols)) {
-        ncplane_putstr_yx(stdplane_, y_pos, x_pos + len, "█");
-    }
-}
-
-void Renderer::waitForExit(const std::string& title, int title_y) {
-    if (!initialized_) {
-        return;
-    }
-
-    ncinput input{};
-
-    // Flush any pending events to ensure we start fresh.
-    while (notcurses_get_nblock(nc_, &input) != static_cast<char32_t>(-1)) {
-    }
-
-    const bool hasTitle = !title.empty();
-
-    if (!hasTitle) {
-        while (true) {
-            char32_t key = notcurses_get_blocking(nc_, &input);
-            if (isExitKey(key)) {
-                break;
-            }
-        }
-        return;
-    }
-
-    bool cursorVisible = true;
-    auto lastBlink = std::chrono::steady_clock::now();
-
-    drawTitle(title, cursorVisible, title_y);
-    render();
-
-    while (true) {
-        char32_t key = notcurses_get_nblock(nc_, &input);
-        if (isExitKey(key)) {
-            break;
-        }
-
-        auto now = std::chrono::steady_clock::now();
-        if (std::chrono::duration_cast<std::chrono::milliseconds>(now - lastBlink).count() >= 500) {
-            cursorVisible = !cursorVisible;
-            drawTitle(title, cursorVisible, title_y);
-            render();
-            lastBlink = now;
-        }
-
-        std::this_thread::sleep_for(std::chrono::milliseconds(50));
-    }
-}
-
-bool Renderer::isExitKey(char32_t key) const {
-    if (key == static_cast<char32_t>(-1) || key == NCKEY_RESIZE) {
-        return false;
-    }
-
-    if (key == 'q' || key == 'Q' || key == NCKEY_ESC || key == NCKEY_ENTER || key == NCKEY_SPACE) {
-        return true;
-    }
-
-    return true;
+void Renderer::wait() {
+    notcurses_get_blocking(nc_, nullptr);
 }
 
 } // namespace hbonsai

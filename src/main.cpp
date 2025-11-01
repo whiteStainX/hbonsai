@@ -34,16 +34,8 @@ int main(int argc, char* argv[]) {
 
     std::vector<hbonsai::TreePart> parts = bonsai.generate(treeHeight, cols);
 
-    // Determine Y position for the title. Place it near the top portion of the
-    // screen, but keep it within the drawable tree area to avoid rendering
-    // issues on very small terminals.
-    int title_y = std::clamp(static_cast<int>(rows / 6), 1, std::max(0, treeHeight - 1));
-
     if (config.live) {
         renderer.prepareFrame(config);
-        if (!config.title.empty()) {
-            renderer.drawTitle(config.title, true, title_y);
-        }
         renderer.render();
         for (const auto& part : parts) {
             renderer.drawLive(part, config);
@@ -54,13 +46,10 @@ int main(int argc, char* argv[]) {
         }
     } else {
         renderer.drawStatic(parts, config);
-        if (!config.title.empty()) {
-            renderer.drawTitle(config.title, true, title_y);
-        }
         renderer.render();
     }
 
-    renderer.waitForExit(config.title, title_y);
+    renderer.wait();
 
     return 0;
 }
