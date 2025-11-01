@@ -6,6 +6,8 @@
 #include <notcurses/notcurses.h>
 #include <string>
 
+#include "hbonsai/title.h"
+
 namespace hbonsai {
 namespace {
 constexpr int kTextColor = 7;
@@ -76,7 +78,7 @@ int Renderer::baseHeightForType(int baseType) {
     }
 }
 
-void Renderer::prepareFrame(const Config& config) {
+void Renderer::prepareFrame(const BonsaiConfig& config) {
     if (!initialized_) {
         return;
     }
@@ -90,7 +92,7 @@ void Renderer::prepareFrame(const Config& config) {
     drawMessage(config, static_cast<int>(rows), static_cast<int>(cols));
 }
 
-void Renderer::drawStatic(const std::vector<TreePart>& parts, const Config& config) {
+void Renderer::drawStatic(const std::vector<TreePart>& parts, const BonsaiConfig& config) {
     if (!initialized_) {
         return;
     }
@@ -105,7 +107,7 @@ void Renderer::drawStatic(const std::vector<TreePart>& parts, const Config& conf
     drawMessage(config, static_cast<int>(rows), static_cast<int>(cols));
 }
 
-void Renderer::drawLive(const TreePart& part, const Config& config) {
+void Renderer::drawLive(const TreePart& part, const BonsaiConfig& config) {
     if (!initialized_) {
         return;
     }
@@ -141,7 +143,7 @@ void Renderer::render() {
     notcurses_render(nc_);
 }
 
-void Renderer::drawTree(const std::vector<TreePart>& parts, const Config& config, int rows, int cols) {
+void Renderer::drawTree(const std::vector<TreePart>& parts, const BonsaiConfig& config, int rows, int cols) {
     int baseHeight = baseHeightForType(config.baseType);
     int treeHeight = rows - baseHeight;
     if (treeHeight <= 0) {
@@ -160,7 +162,7 @@ void Renderer::drawTree(const std::vector<TreePart>& parts, const Config& config
     }
 }
 
-void Renderer::drawBase(const Config& config, int rows, int cols) {
+void Renderer::drawBase(const BonsaiConfig& config, int rows, int cols) {
     auto [height, width] = baseDimensions(config.baseType);
     if (height == 0 || width == 0) {
         return;
@@ -202,7 +204,7 @@ void Renderer::drawBase(const Config& config, int rows, int cols) {
     }
 }
 
-void Renderer::drawMessage(const Config& config, int rows, int cols) {
+void Renderer::drawMessage(const BonsaiConfig& config, int rows, int cols) {
     if (config.message.empty()) {
         return;
     }
@@ -216,6 +218,16 @@ void Renderer::drawMessage(const Config& config, int rows, int cols) {
 
     setPlaneColor(kTextColor, true);
     ncplane_putstr_yx(stdplane_, msgY, msgX, config.message.c_str());
+}
+
+void Renderer::renderTitle(const TitleConfig& config) {
+    if (!initialized_) {
+        return;
+    }
+
+    ncplane_erase(stdplane_);
+    Title title(config.text);
+    title.render(stdplane_);
 }
 
 void Renderer::wait() {

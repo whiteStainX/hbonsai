@@ -22,12 +22,12 @@ struct TreePart {
 
 class Bonsai {
 public:
-    explicit Bonsai(const Config& config);
+    explicit Bonsai(const BonsaiConfig& config);
 
     std::vector<TreePart> generate(int height, int width);
 
 private:
-    const Config& config_;
+    const BonsaiConfig& config_;
 
     enum class BranchType { Trunk, ShootLeft, ShootRight, Dying, Dead };
 
