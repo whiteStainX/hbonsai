@@ -221,13 +221,14 @@ void Renderer::drawMessage(const BonsaiConfig& config, int rows, int cols) {
 }
 
 void Renderer::renderTitle(const TitleConfig& config) {
-    if (!initialized_) {
+    if (!initialized_ || config.text.empty()) {
         return;
     }
 
-    ncplane_erase(stdplane_);
+    setPlaneColor(kTextColor, true);
     Title title(config.text);
     title.render(stdplane_);
+    ncplane_set_styles(stdplane_, NCSTYLE_NONE);
 }
 
 void Renderer::wait() {

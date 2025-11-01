@@ -12,7 +12,7 @@ namespace hbonsai {
 
 class BonsaiScene : public Scene {
 public:
-    BonsaiScene(const AppConfig& appConfig, const BonsaiConfig& bonsaiConfig);
+    BonsaiScene(const AppConfig& appConfig, const BonsaiConfig& bonsaiConfig, const TitleConfig& titleConfig);
 
     void onEnter(Renderer& renderer) override;
     void update(double dt) override;
@@ -24,6 +24,7 @@ private:
 
     const AppConfig& appConfig_;
     const BonsaiConfig& bonsaiConfig_;
+    const TitleConfig& titleConfig_;
     Bonsai bonsai_;
     std::vector<TreePart> parts_;
     std::vector<std::size_t> pendingParts_;
@@ -35,6 +36,8 @@ private:
     bool finished_ = false;
     bool framePrepared_ = false;
     bool staticDrawn_ = false;
+    double titleElapsed_ = 0.0;
+    bool titleVisible_ = false;
 };
 
 } // namespace hbonsai

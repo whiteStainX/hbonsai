@@ -6,8 +6,8 @@
 
 namespace hbonsai {
 
-BonsaiScene::BonsaiScene(const AppConfig& appConfig, const BonsaiConfig& bonsaiConfig)
-    : appConfig_(appConfig), bonsaiConfig_(bonsaiConfig), bonsai_(bonsaiConfig) {}
+BonsaiScene::BonsaiScene(const AppConfig& appConfig, const BonsaiConfig& bonsaiConfig, const TitleConfig& titleConfig)
+    : appConfig_(appConfig), bonsaiConfig_(bonsaiConfig), titleConfig_(titleConfig), bonsai_(bonsaiConfig) {}
 
 void BonsaiScene::onEnter(Renderer& renderer) {
     auto [rows, cols] = renderer.dimensions();
@@ -26,9 +26,18 @@ void BonsaiScene::resetState() {
     finished_ = parts_.empty();
     framePrepared_ = false;
     staticDrawn_ = false;
+    titleElapsed_ = 0.0;
+    titleVisible_ = !titleConfig_.text.empty();
 }
 
 void BonsaiScene::update(double dt) {
+    if (titleVisible_ && titleConfig_.displaySeconds > 0.0) {
+        titleElapsed_ += dt;
+        if (titleElapsed_ >= titleConfig_.displaySeconds) {
+            titleVisible_ = false;
+        }
+    }
+
     if (!appConfig_.live) {
         return;
     }
@@ -70,6 +79,9 @@ void BonsaiScene::draw(Renderer& renderer) {
     if (!appConfig_.live) {
         if (!staticDrawn_) {
             renderer.drawStatic(parts_, bonsaiConfig_);
+            if (titleVisible_) {
+                renderer.renderTitle(titleConfig_);
+            }
             staticDrawn_ = true;
             finished_ = true;
         }
@@ -85,6 +97,9 @@ void BonsaiScene::draw(Renderer& renderer) {
         if (index < parts_.size()) {
             renderer.drawLive(parts_[index], bonsaiConfig_);
         }
+    }
+    if (titleVisible_) {
+        renderer.renderTitle(titleConfig_);
     }
     pendingParts_.clear();
 }

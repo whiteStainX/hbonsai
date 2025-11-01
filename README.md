@@ -56,6 +56,7 @@ Key flags include:
 - `-i, --infinite` – Continuously grow new trees. Combine with `-w, --wait` to set the pause between trees.
 - `-S, --screensaver` – Shortcut for live + infinite modes and quits on keypress. Automatically enables saving/loading progress.
 - `-m, --message=STR` – Display a custom message alongside the tree.
+- `-T, --title=STR` – Set the title text shown near the top while the bonsai renders (default: `hbonsai`). Use an empty string to hide it.
 - `-b, --base=INT` – Choose the ASCII-art pot/base (0 disables it).
 - `-c, --leaf=LIST` – Provide a comma-separated list of leaf glyphs (UTF-8 supported).
 - `-k, --color=LIST` – Provide four comma-separated 0–255 color indexes for dark leaves, dark wood, light leaves, and light wood.

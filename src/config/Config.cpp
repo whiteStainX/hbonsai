@@ -151,6 +151,7 @@ Config parse_args(int argc, char* argv[]) {
         {"multiplier", required_argument, nullptr, 'M'},
         {"life", required_argument, nullptr, 'L'},
         {"print", no_argument, nullptr, 'p'},
+        {"title", required_argument, nullptr, 'T'},
         {"seed", required_argument, nullptr, 's'},
         {"save", optional_argument, nullptr, 'W'},
         {"load", optional_argument, nullptr, 'C'},
@@ -159,7 +160,7 @@ Config parse_args(int argc, char* argv[]) {
         {nullptr, 0, nullptr, 0}
     };
 
-    const char* short_opts = ":lt:iw:Sm:b:c:k:M:L:ps:W::C::vh";
+    const char* short_opts = ":lt:iw:Sm:b:c:k:M:L:pT:s:W::C::vh";
 
     bool has_error = false;
 
@@ -220,6 +221,14 @@ Config parse_args(int argc, char* argv[]) {
                 has_error = true;
             } else {
                 config.bonsai.message = optarg;
+            }
+            break;
+        case 'T':
+            if (!optarg) {
+                std::cerr << "error: option requires an argument -- 'T'" << std::endl;
+                has_error = true;
+            } else {
+                config.title.text = optarg;
             }
             break;
         case 'b': {
@@ -405,6 +414,7 @@ void print_help(std::ostream& os) {
        << "  -S, --screensaver      screensaver mode; equivalent to -li and\n"
        << "                           quit on any keypress\n"
        << "  -m, --message=STR      attach message next to the tree\n"
+       << "  -T, --title=STR        set title text displayed above the bonsai\n"
        << "  -b, --base=INT         ascii-art plant base to use, 0 is none\n"
        << "  -c, --leaf=LIST        list of comma-delimited strings randomly chosen\n"
        << "                           for leaves [default: &]\n"
