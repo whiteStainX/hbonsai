@@ -28,7 +28,7 @@ We will implement a **Scene Manager** pattern. This involves the following compo
 
 ## 3. Step-by-Step Refactoring Plan
 
-### Step 1: Modularize Configuration
+### Step 1: Modularize Configuration ✅ Completed
 
 1.  **Create Component Configs:**
     -   In `include/hbonsai/config.h`, break the `Config` struct into smaller structs:
@@ -40,7 +40,7 @@ We will implement a **Scene Manager** pattern. This involves the following compo
 2.  **Update Argument Parsing:**
     -   In `src/config/Config.cpp`, update the `parse_args` function to populate the new, nested configuration structs.
 
-### Step 2: Implement the Scene Management System
+### Step 2: Implement the Scene Management System ✅ Completed
 
 1.  **Create `Scene` Interface:**
     -   Create a new header file `include/hbonsai/scene.h`.
@@ -51,7 +51,7 @@ We will implement a **Scene Manager** pattern. This involves the following compo
     -   The `SceneManager` will have methods like `addScene(std::unique_ptr<Scene> scene)` and `run()`.
     -   The `run()` method will contain the main application loop that is currently in `main.cpp`.
 
-### Step 3: Refactor `Bonsai` into `BonsaiScene`
+### Step 3: Refactor `Bonsai` into `BonsaiScene` ✅ Completed
 
 1.  **Create `BonsaiScene`:**
     -   Create `include/hbonsai/bonsai_scene.h` and `src/bonsai_scene.cpp`.
@@ -61,7 +61,7 @@ We will implement a **Scene Manager** pattern. This involves the following compo
     -   The `update()` method will handle the step-by-step generation in live mode.
     -   The `draw()` method will call the appropriate `Renderer` methods.
 
-### Step 4: Create the New `TitleScene`
+### Step 4: Create the New `TitleScene` ✅ Completed
 
 1.  **Create `TitleScene`:**
     -   Create `include/hbonsai/title_scene.h` and `src/title_scene.cpp`.
@@ -69,7 +69,7 @@ We will implement a **Scene Manager** pattern. This involves the following compo
     -   It will contain all logic for animating and rendering the title. This fulfills the requirement for a clean, isolated, and portable animation.
     -   The `TitleConfig` struct will be passed to its constructor.
 
-### Step 5: Simplify the `main()` Function
+### Step 5: Simplify the `main()` Function ✅ Completed
 
 1.  **Update `main.cpp`:**
     -   The `main()` function will become much simpler. Its only responsibilities will be:

@@ -61,9 +61,9 @@ std::wstring utf8_to_wstring(const std::string& input) {
 
 } // namespace
 
-Bonsai::Bonsai(const Config& config)
+Bonsai::Bonsai(const BonsaiConfig& config)
     : config_(config), rng_(config.seed == 0 ? std::random_device{}()
-                                              : static_cast<unsigned int>(config.seed)) {
+                                             : static_cast<unsigned int>(config.seed)) {
     if (config_.leaves.empty()) {
         leaves_.push_back(L"&");
     } else {

@@ -17,10 +17,13 @@ endif()
 # --- Sources ---
 set(BONSAI_SOURCES
   src/main.cpp
+  src/bonsai_scene.cpp
   src/bonsai/Bonsai.cpp
   src/config/Config.cpp
   src/renderer/Renderer.cpp
+  src/scenemanager.cpp
   src/title/Title.cpp
+  src/title_scene.cpp
 )
 
 # --- Executable ---

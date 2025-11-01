@@ -83,9 +83,9 @@ std::string default_cache_path() {
 }
 
 bool load_progress(Config& config) {
-    std::ifstream file(config.loadFile);
+    std::ifstream file(config.bonsai.loadFile);
     if (!file.is_open()) {
-        std::cerr << "error: file was not opened properly for reading: " << config.loadFile << std::endl;
+        std::cerr << "error: file was not opened properly for reading: " << config.bonsai.loadFile << std::endl;
         return false;
     }
 
@@ -96,8 +96,8 @@ bool load_progress(Config& config) {
         return false;
     }
 
-    config.seed = seed;
-    config.targetBranchCount = target;
+    config.bonsai.seed = seed;
+    config.bonsai.targetBranchCount = target;
     return true;
 }
 
@@ -128,8 +128,8 @@ bool validate_color_indices(const std::vector<std::string>& parts, std::array<in
 
 Config parse_args(int argc, char* argv[]) {
     Config config;
-    config.saveFile = default_cache_path();
-    config.loadFile = default_cache_path();
+    config.bonsai.saveFile = default_cache_path();
+    config.bonsai.loadFile = default_cache_path();
 
     std::string leavesInput = "&";
     std::string colorsInput = "2,3,10,11";
@@ -172,7 +172,7 @@ Config parse_args(int argc, char* argv[]) {
 
         switch (c) {
         case 'l':
-            config.live = true;
+            config.app.live = true;
             break;
         case 't': {
             if (!optarg) {
@@ -180,9 +180,9 @@ Config parse_args(int argc, char* argv[]) {
                 has_error = true;
                 break;
             }
-            float parsed = config.timeStep;
+            float parsed = config.app.timeStep;
             if (parse_float(optarg, parsed) && parsed > 0.0f) {
-                config.timeStep = parsed;
+                config.app.timeStep = parsed;
             } else {
                 std::cerr << "error: invalid step time: '" << optarg << "'" << std::endl;
                 has_error = true;
@@ -190,7 +190,7 @@ Config parse_args(int argc, char* argv[]) {
             break;
         }
         case 'i':
-            config.infinite = true;
+            config.app.infinite = true;
             break;
         case 'w': {
             if (!optarg) {
@@ -198,9 +198,9 @@ Config parse_args(int argc, char* argv[]) {
                 has_error = true;
                 break;
             }
-            double parsed = config.timeWait;
+            double parsed = config.title.displaySeconds;
             if (parse_double(optarg, parsed) && parsed > 0.0) {
-                config.timeWait = parsed;
+                config.title.displaySeconds = parsed;
             } else {
                 std::cerr << "error: invalid wait time: '" << optarg << "'" << std::endl;
                 has_error = true;
@@ -208,18 +208,18 @@ Config parse_args(int argc, char* argv[]) {
             break;
         }
         case 'S':
-            config.live = true;
-            config.infinite = true;
-            config.screensaver = true;
-            config.save = true;
-            config.load = true;
+            config.app.live = true;
+            config.app.infinite = true;
+            config.app.screensaver = true;
+            config.bonsai.save = true;
+            config.bonsai.load = true;
             break;
         case 'm':
             if (!optarg) {
                 std::cerr << "error: option requires an argument -- 'm'" << std::endl;
                 has_error = true;
             } else {
-                config.message = optarg;
+                config.bonsai.message = optarg;
             }
             break;
         case 'b': {
@@ -228,9 +228,9 @@ Config parse_args(int argc, char* argv[]) {
                 has_error = true;
                 break;
             }
-            int parsed = config.baseType;
+            int parsed = config.bonsai.baseType;
             if (parse_int(optarg, parsed) && parsed >= 0) {
-                config.baseType = parsed;
+                config.bonsai.baseType = parsed;
             } else {
                 std::cerr << "error: invalid base index: '" << optarg << "'" << std::endl;
                 has_error = true;
@@ -259,9 +259,9 @@ Config parse_args(int argc, char* argv[]) {
                 has_error = true;
                 break;
             }
-            int parsed = config.multiplier;
+            int parsed = config.bonsai.multiplier;
             if (parse_int(optarg, parsed) && parsed > 0) {
-                config.multiplier = parsed;
+                config.bonsai.multiplier = parsed;
             } else {
                 std::cerr << "error: invalid multiplier: '" << optarg << "'" << std::endl;
                 has_error = true;
@@ -274,9 +274,9 @@ Config parse_args(int argc, char* argv[]) {
                 has_error = true;
                 break;
             }
-            int parsed = config.lifeStart;
+            int parsed = config.bonsai.lifeStart;
             if (parse_int(optarg, parsed) && parsed > 0) {
-                config.lifeStart = parsed;
+                config.bonsai.lifeStart = parsed;
             } else {
                 std::cerr << "error: invalid initial life: '" << optarg << "'" << std::endl;
                 has_error = true;
@@ -284,7 +284,7 @@ Config parse_args(int argc, char* argv[]) {
             break;
         }
         case 'p':
-            config.printTree = true;
+            config.app.printTree = true;
             break;
         case 's': {
             if (!optarg) {
@@ -292,9 +292,9 @@ Config parse_args(int argc, char* argv[]) {
                 has_error = true;
                 break;
             }
-            int parsed = config.seed;
+            int parsed = config.bonsai.seed;
             if (parse_int(optarg, parsed) && parsed > 0) {
-                config.seed = parsed;
+                config.bonsai.seed = parsed;
             } else {
                 std::cerr << "error: invalid seed: '" << optarg << "'" << std::endl;
                 has_error = true;
@@ -302,19 +302,19 @@ Config parse_args(int argc, char* argv[]) {
             break;
         }
         case 'W':
-            config.save = true;
+            config.bonsai.save = true;
             if (optarg) {
-                config.saveFile = optarg;
+                config.bonsai.saveFile = optarg;
             }
             break;
         case 'C':
-            config.load = true;
+            config.bonsai.load = true;
             if (optarg) {
-                config.loadFile = optarg;
+                config.bonsai.loadFile = optarg;
             }
             break;
         case 'v':
-            config.verbosity += 1;
+            config.app.verbosity += 1;
             break;
         case 'h':
             config.showHelp = true;
@@ -323,9 +323,9 @@ Config parse_args(int argc, char* argv[]) {
             break;
         case ':':
             if (optopt == 'W') {
-                config.save = true;
+                config.bonsai.save = true;
             } else if (optopt == 'C') {
-                config.load = true;
+                config.bonsai.load = true;
             } else {
                 std::cerr << "error: option requires an argument -- '" << static_cast<char>(optopt) << "'" << std::endl;
                 has_error = true;
@@ -360,27 +360,27 @@ Config parse_args(int argc, char* argv[]) {
 
     auto leaves = split_list(leavesInput);
     if (!leaves.empty()) {
-        config.leaves = leaves;
+        config.bonsai.leaves = leaves;
     } else {
-        config.leaves = {"&"};
+        config.bonsai.leaves = {"&"};
     }
 
-    std::array<int, 4> parsedColors = config.colors;
+    std::array<int, 4> parsedColors = config.bonsai.colors;
     auto colorParts = split_list(colorsInput);
     if (!validate_color_indices(colorParts, parsedColors)) {
         set_error(config, 1, true);
         return config;
     }
-    config.colors = parsedColors;
+    config.bonsai.colors = parsedColors;
 
-    if (config.save && config.saveFile.empty()) {
-        config.saveFile = default_cache_path();
+    if (config.bonsai.save && config.bonsai.saveFile.empty()) {
+        config.bonsai.saveFile = default_cache_path();
     }
-    if (config.load && config.loadFile.empty()) {
-        config.loadFile = default_cache_path();
+    if (config.bonsai.load && config.bonsai.loadFile.empty()) {
+        config.bonsai.loadFile = default_cache_path();
     }
 
-    if (config.load) {
+    if (config.bonsai.load) {
         if (!load_progress(config)) {
             set_error(config, 1, false);
             return config;

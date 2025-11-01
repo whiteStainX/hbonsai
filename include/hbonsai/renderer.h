@@ -20,9 +20,10 @@ public:
 
     bool isInitialized() const;
     std::pair<int, int> dimensions() const;
-    void prepareFrame(const Config& config);
-    void drawStatic(const std::vector<TreePart>& parts, const Config& config);
-    void drawLive(const TreePart& part, const Config& config);
+    void prepareFrame(const BonsaiConfig& config);
+    void drawStatic(const std::vector<TreePart>& parts, const BonsaiConfig& config);
+    void drawLive(const TreePart& part, const BonsaiConfig& config);
+    void renderTitle(const TitleConfig& config);
     void render();
     void wait(); // Wait for input
 
@@ -34,9 +35,9 @@ private:
     bool initialized_ = false;
 
     void setPlaneColor(int colorIndex, bool bold);
-    void drawTree(const std::vector<TreePart>& parts, const Config& config, int rows, int cols);
-    void drawBase(const Config& config, int rows, int cols);
-    void drawMessage(const Config& config, int rows, int cols);
+    void drawTree(const std::vector<TreePart>& parts, const BonsaiConfig& config, int rows, int cols);
+    void drawBase(const BonsaiConfig& config, int rows, int cols);
+    void drawMessage(const BonsaiConfig& config, int rows, int cols);
     std::pair<int, int> baseDimensions(int baseType) const;
 };
 

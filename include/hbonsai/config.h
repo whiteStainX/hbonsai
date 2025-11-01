@@ -8,19 +8,21 @@
 
 namespace hbonsai {
 
-struct Config {
+struct AppConfig {
     bool live = false;
     bool infinite = false;
     bool screensaver = false;
     bool printTree = false;
     int verbosity = 0;
+    float timeStep = 0.03f;
+};
+
+struct BonsaiConfig {
     int lifeStart = 32;
     int multiplier = 5;
     int baseType = 1;
     int seed = 0;
     int targetBranchCount = 0;
-    double timeWait = 4.0;
-    float timeStep = 0.03f;
     std::string message;
     std::vector<std::string> leaves = {"&"};
     std::array<int, 4> colors = {2, 3, 10, 11};
@@ -28,6 +30,17 @@ struct Config {
     bool load = false;
     std::string saveFile;
     std::string loadFile;
+};
+
+struct TitleConfig {
+    std::string text = "hbonsai";
+    double displaySeconds = 4.0;
+};
+
+struct Config {
+    AppConfig app;
+    BonsaiConfig bonsai;
+    TitleConfig title;
 
     bool showHelp = false;
     bool exitRequested = false;
