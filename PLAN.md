@@ -1,87 +1,101 @@
-# Refactoring and Design Improvement Plan
+# PLAN: Refactoring to a Layer-Stack Architecture
 
-This document outlines a plan to refactor the `hbonsai` project to a more modular, extensible, and configurable architecture. This plan is based on the results of a code review and addresses the new requirements for a separate title animation and higher modularity.
+This document outlines the plan to refactor the project from a sequential scene manager to a concurrent, layer-based compositing architecture. This will achieve true independence between animations and provide a highly modular and configurable system.
 
-## 1. Architectural Goals
+## 1. Architectural Goal: The Layer Stack
 
-1.  **Scene-Based Architecture:** Transition from a single, hardcoded application loop in `main()` to a flexible, scene-based architecture. This will allow for different parts of the application (e.g., title, bonsai, credits) to exist as independent, self-contained modules.
-2.  **Component-Based Configuration:** Break down the monolithic `Config` struct into smaller, component-specific configuration objects (e.g., `BonsaiConfig`, `TitleConfig`, `AppConfig`).
-3.  **Decoupled Main Loop:** The main application loop should be completely agnostic of what is being animated or rendered. It will be driven by a `SceneManager` that handles transitions and updates.
+We will replace the current `SceneManager` with a `LayerStack`. On every frame, the `LayerStack` will update and draw all active `Layer`s simultaneously. Each layer will be an independent module with its own state, logic, and dedicated drawing surface (`ncplane`).
 
-## 2. Proposed Architecture: Scene Manager
+This enables:
+- **Concurrency:** Multiple animations (e.g., title and bonsai) can run at the same time.
+- **Modularity:** Each visual component (title, bonsai, effects) is a self-contained `Layer`.
+- **Configurability:** The application's layout and active components can be defined by the configuration.
 
-We will implement a **Scene Manager** pattern. This involves the following components:
+## 2. Step-by-Step Refactoring Plan
 
--   **`Scene` (Interface):** An abstract base class that defines the contract for any animatable scene. It will have the following methods:
-    -   `virtual void update(double dt) = 0;` (To update animation state)
-    -   `virtual void draw(Renderer& renderer) = 0;` (To render the current state)
-    -   `virtual bool isFinished() const = 0;` (To signal completion to the SceneManager)
+### Step 1: Redefine the `Scene` interface to `Layer`
 
--   **Concrete `Scene` Implementations:**
-    -   **`TitleScene`:** A new class for the title animation. It will manage its own state, animation logic, and rendering calls. It will be completely isolated from the bonsai logic.
-    -   **`BonsaiScene`:** This class will encapsulate the logic currently in `main.cpp` for growing and rendering the bonsai tree.
+1.  **Rename and Modify the Interface:**
+    -   Rename `include/hbonsai/scene.h` to `include/hbonsai/layer.h`.
+    -   Rename the `Scene` class to `Layer`.
+    -   Update its virtual methods:
+        ```cpp
+        class Layer {
+        public:
+            virtual ~Layer() = default;
 
--   **`SceneManager`:** A class that manages a queue of `Scene` objects. It will be responsible for:
-    -   Running the main application loop.
-    -   Calling `update()` and `draw()` on the current scene.
-    -   Checking `isFinished()` and transitioning to the next scene in the queue.
+            // Called when the layer is added to the stack.
+            virtual void onAttach(ncplane* plane) { ncp_ = plane; }
 
-## 3. Step-by-Step Refactoring Plan
+            // Called every frame to update state.
+            virtual void update(double dt) = 0;
 
-### Step 1: Modularize Configuration ✅ Completed
+            // Called every frame to draw to the layer's own plane.
+            virtual void draw() = 0;
 
-1.  **Create Component Configs:**
-    -   In `include/hbonsai/config.h`, break the `Config` struct into smaller structs:
-        -   `BonsaiConfig`: Contains `lifeStart`, `multiplier`, `leaves`, `colors`, etc.
-        -   `TitleConfig`: A new struct for title text, animation style, colors, etc.
-        -   `AppConfig`: Contains application-level settings like `live`, `infinite`, `timeStep`, `screensaver`.
-    -   The main `Config` struct will now be composed of these smaller structs.
+            // Signals to the stack that this layer can be removed.
+            virtual bool isFinished() const { return false; }
 
-2.  **Update Argument Parsing:**
-    -   In `src/config/Config.cpp`, update the `parse_args` function to populate the new, nested configuration structs.
+        protected:
+            ncplane* ncp_ = nullptr; // The layer's personal drawing surface
+        };
+        ```
 
-### Step 2: Implement the Scene Management System ✅ Completed
+### Step 2: Upgrade `SceneManager` to `LayerStack`
 
-1.  **Create `Scene` Interface:**
-    -   Create a new header file `include/hbonsai/scene.h`.
-    -   Define the abstract `Scene` base class within this file.
+1.  **Rename and Refactor:**
+    -   Rename `scenemanager.h` to `layerstack.h` and `scenemanager.cpp` to `layerstack.cpp`.
+    -   Rename the `SceneManager` class to `LayerStack`.
+2.  **Update Member Variables:**
+    -   It will now hold a `std::vector<std::unique_ptr<Layer>>` instead of a `deque`.
+3.  **Rewrite the `run()` loop:**
+    -   The loop will no longer pop from a queue.
+    -   On each iteration, it will loop through the *entire* vector of layers and call `layer->update(dt)`.
+    -   After all updates, it will loop through the vector again and call `layer->draw()`.
+    -   It will be responsible for creating an `ncplane` for each layer it manages and passing it to the layer's `onAttach` method.
 
-2.  **Create `SceneManager`:**
-    -   Create `include/hbonsai/scenemanager.h` and `src/scenemanager.cpp`.
-    -   The `SceneManager` will have methods like `addScene(std::unique_ptr<Scene> scene)` and `run()`.
-    -   The `run()` method will contain the main application loop that is currently in `main.cpp`.
+### Step 3: Convert `TitleScene` and `BonsaiScene` to Layers
 
-### Step 3: Refactor `Bonsai` into `BonsaiScene` ✅ Completed
+1.  **Refactor `TitleScene` to `TitleLayer`:**
+    -   Rename the files and the class.
+    -   Inherit from `Layer`.
+    -   The `draw(Renderer&)` method becomes `draw()`. All drawing will use the `ncp_` member variable.
+2.  **Refactor `BonsaiScene` to `BonsaiLayer`:**
+    -   Rename the files and the class.
+    -   Inherit from `Layer`.
+    -   The `draw(Renderer&)` method becomes `draw()`. All drawing will use the `ncp_` member variable.
+    -   The `Renderer` will no longer be passed around. Instead, the `Layer` will encapsulate its own drawing logic on its own plane.
 
-1.  **Create `BonsaiScene`:**
-    -   Create `include/hbonsai/bonsai_scene.h` and `src/bonsai_scene.cpp`.
-    -   This class will inherit from `Scene`.
-    -   Move the bonsai-related logic from `main.cpp` into this class.
-    -   The `BonsaiScene` will own the `Bonsai` object (the generator) and the vector of `TreePart`s.
-    -   The `update()` method will handle the step-by-step generation in live mode.
-    -   The `draw()` method will call the appropriate `Renderer` methods.
+### Step 4: Create a Global Effects Layer (Example: Cursor)
 
-### Step 4: Create the New `TitleScene` ✅ Completed
+1.  **Create `EffectsLayer`:**
+    -   Create `effects_layer.h` and `effects_layer.cpp`.
+    -   The `EffectsLayer` class will inherit from `Layer`.
+2.  **Implement Blinking Logic:**
+    -   Its `update(dt)` method will manage the timing for a blinking cursor.
+    -   Its `draw()` method will get the current mouse coordinates from `notcurses` and draw a cursor character on its plane if the blink logic determines it's visible.
+    -   Its plane will need to be transparent so the layers below are visible.
 
-1.  **Create `TitleScene`:**
-    -   Create `include/hbonsai/title_scene.h` and `src/title_scene.cpp`.
-    -   This class will inherit from `Scene`.
-    -   It will contain all logic for animating and rendering the title. This fulfills the requirement for a clean, isolated, and portable animation.
-    -   The `TitleConfig` struct will be passed to its constructor.
+### Step 5: Update Configuration for Layouts
 
-### Step 5: Simplify the `main()` Function ✅ Completed
+1.  **Add Layout Properties to Config:**
+    -   The `TitleConfig` and `BonsaiConfig` structs will get new properties to define their plane's size and position (e.g., `int y, x, rows, cols`). We can also support percentages of the screen.
+2.  **Update `main.cpp`:**
+    -   The main function will now be responsible for reading this layout configuration.
+    -   When creating layers, it will use the layout config to create the appropriate `ncplane` for each layer before adding it to the `LayerStack`.
 
-1.  **Update `main.cpp`:**
-    -   The `main()` function will become much simpler. Its only responsibilities will be:
-        1.  Parse arguments into the `Config` object.
-        2.  Initialize the `Renderer`.
-        3.  Initialize the `SceneManager`.
-        4.  Create instances of `TitleScene` and `BonsaiScene` (based on the config) and add them to the `SceneManager`.
-        5.  Call `sceneManager.run()`.
+### Step 6: Finalize `main.cpp`
 
-## 4. Expected Outcome
+1.  **Tie Everything Together:**
+    -   The `main` function will be updated to use the new class names.
+    -   It will create the `LayerStack`.
+    -   It will create the `TitleLayer`, `BonsaiLayer`, and conditionally the `EffectsLayer` based on the config.
+    -   It will add these layers to the stack.
+    -   It will call `layerStack.run()`.
 
--   **High Modularity:** Each part of the application (title, bonsai) is a self-contained `Scene`. Adding a new animation is as simple as creating a new class that implements the `Scene` interface.
--   **Clean Separation:** The bonsai generation logic (`Bonsai` class) is cleanly separated from the animation and rendering logic (`BonsaiScene` and `Renderer`).
--   **Configurability:** The configuration is neatly organized by component, making it easier to manage and extend.
--   **Flexibility:** The `SceneManager` can easily be configured to run scenes in any order, or even to create branching application flows.
+## 3. Expected Outcome
+
+-   **True Independence:** The `TitleLayer` and `BonsaiLayer` will be able to run concurrently, each in its own region of the screen, without any knowledge of the other.
+-   **Enhanced Modularity:** Adding a new visual element is as simple as creating a new class that inherits from `Layer` and adding it to the stack in `main`.
+-   **Centralized Effects:** Global effects like a blinking cursor are handled in one place (`EffectsLayer`) and can be toggled via a single configuration flag.
+-   **Declarative Layout:** The screen layout will be defined in the configuration, making the application highly flexible and easy to reconfigure.
