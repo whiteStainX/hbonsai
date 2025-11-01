@@ -26,7 +26,7 @@ public:
     void drawLive(const TreePart& part, const Config& config);
     void drawTitle(const std::string& title, bool cursor_visible, int y_pos);
     void render();
-    void waitForExit(const std::string& title, int title_y);
+    void wait(); // Wait for input
 
     static int baseHeightForType(int baseType);
 
@@ -40,7 +40,6 @@ private:
     void drawBase(const Config& config, int rows, int cols);
     void drawMessage(const Config& config, int rows, int cols);
     std::pair<int, int> baseDimensions(int baseType) const;
-    bool isExitKey(char32_t key) const;
 };
 
 } // namespace hbonsai
